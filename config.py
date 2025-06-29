@@ -9,6 +9,7 @@ class Config:
     def __init__(self):
         load_dotenv()
         self._gemini_api_key: Optional[str] = None
+        self._database_url: Optional[str] = None
     
     @property
     def gemini_api_key(self) -> str:
@@ -18,6 +19,21 @@ class Config:
             if not self._gemini_api_key:
                 raise ValueError("GEMINI_API_KEY environment variable is not set")
         return self._gemini_api_key
+    
+    @property
+    def database_url(self) -> str:
+        """PostgreSQL veritabanı bağlantı URL'ini döndürür"""
+        if self._database_url is None:
+            self._database_url = os.getenv("DATABASE_URL")
+            if not self._database_url:
+                # Varsayılan PostgreSQL bağlantı bilgileri
+                host = os.getenv("DB_HOST", "localhost")
+                port = os.getenv("DB_PORT", "5432")
+                database = os.getenv("DB_NAME", "can-hocam")
+                username = os.getenv("DB_USER", "postgres")
+                password = os.getenv("DB_PASSWORD", "3413")
+                self._database_url = f"postgresql://{username}:{password}@{host}:{port}/{database}"
+        return self._database_url
     
     @property
     def model_name(self) -> str:

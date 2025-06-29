@@ -1,39 +1,46 @@
 from typing import List
 from models import StudentPerformance, StudyPlan, Subject
 from interfaces import AIServiceInterface
-from repository import DataRepository
+from database_repository import DatabaseRepository
 
 
 class StudyPlanService:
     """Çalışma planı servisi - business logic"""
     
-    def __init__(self, ai_service: AIServiceInterface, repository: DataRepository):
+    def __init__(self, ai_service: AIServiceInterface, db_repository: DatabaseRepository):
         self.ai_service = ai_service
-        self.repository = repository
+        self.db_repository = db_repository
     
     async def generate_study_plan_for_student(self, student_id: str) -> StudyPlan:
         """Öğrenci için çalışma planı oluşturur"""
-        # Öğrenci verilerini al
-        student_performance = self.repository.get_student_by_id(student_id)
+        # PostgreSQL'den öğrenci verilerini al
+        student_performance = self.db_repository.get_student_performance(student_id)
         
-        # Tüm dersleri al
-        subjects = self.repository.get_all_subjects()
+        if not student_performance:
+            raise ValueError(f"Student with ID {student_id} not found")
+        
+        # PostgreSQL'den ders ve konu verilerini al (sadece id ve name)
+        subjects_data = self.db_repository.get_subjects_for_ai()
         
         # Öğrenci performansını analiz et
         analysis = self._analyze_student_performance(student_performance)
         
         # AI'dan çalışma planı oluşturmasını iste
-        study_plan = await self.ai_service.generate_study_plan(student_performance, subjects)
+        study_plan = await self.ai_service.generate_study_plan(student_performance, subjects_data)
         
         return study_plan
     
-    def get_all_students(self) -> List[StudentPerformance]:
-        """Tüm öğrencileri döndürür"""
-        return self.repository.get_all_students()
+    def get_all_subjects_from_db(self) -> List[dict]:
+        """PostgreSQL'den tüm dersleri döndürür"""
+        return self.db_repository.get_subjects_for_ai()
     
     def get_all_subjects(self) -> List[Subject]:
-        """Tüm dersleri döndürür"""
-        return self.repository.get_all_subjects()
+        """Tüm dersleri Subject modeli olarak döndürür"""
+        return self.db_repository.get_all_subjects_with_topics()
+    
+    def test_database_connection(self) -> bool:
+        """Veritabanı bağlantısını test eder"""
+        return self.db_repository.test_connection()
     
     def _analyze_student_performance(self, student_performance: StudentPerformance) -> dict:
         """Öğrenci performansını analiz eder"""

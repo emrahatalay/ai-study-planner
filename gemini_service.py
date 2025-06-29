@@ -27,13 +27,13 @@ class GeminiAIService(AIServiceInterface):
     async def generate_study_plan(
         self, 
         student_performance: StudentPerformance, 
-        subjects: List[Subject]
+        subjects_data: List[dict]  # PostgreSQL'den gelen id ve name verileri
     ) -> StudyPlan:
         """Öğrenci performansına göre çalışma planı oluşturur"""
         if not self.is_healthy():
             raise Exception("Gemini AI servisi yapılandırılmamış")
         
-        prompt = self._create_prompt(student_performance, subjects)
+        prompt = self._create_prompt(student_performance, subjects_data)
         
         try:
             response = self.model.generate_content(prompt)
@@ -41,14 +41,10 @@ class GeminiAIService(AIServiceInterface):
         except Exception as e:
             raise Exception(f"Gemini AI isteği başarısız: {e}")
     
-    def _create_prompt(self, student_performance: StudentPerformance, subjects: List[Subject]) -> str:
+    def _create_prompt(self, student_performance: StudentPerformance, subjects_data: List[dict]) -> str:
         """AI için prompt oluşturur"""
         
-        subjects_json = json.dumps([{
-            "id": subject.id,
-            "name": subject.name,
-            "topics": [{"id": topic.id, "name": topic.name} for topic in subject.topics]
-        } for subject in subjects], ensure_ascii=False, indent=2)
+        subjects_json = json.dumps(subjects_data, ensure_ascii=False, indent=2)
         
         reports_json = json.dumps([{
             "subject": report.subject,
@@ -63,39 +59,43 @@ Sen bir eğitim uzmanısın. Aşağıdaki veriler doğrultusunda bir öğrenci i
 - Ad: {student_performance.name}
 - ID: {student_performance.student_id}
 
-Mevcut Dersler ve Konular:
+Mevcut Dersler ve Konular (PostgreSQL veritabanından):
 {subjects_json}
 
-Son 3 Haftalık Performans Raporu (10 üzerinden puanlama):
+Son Performans Raporu (10 üzerinden puanlama):
 {reports_json}
 
 Görevlerin:
 1. Zayıf konuları (6 puan altı) belirle
-2. Güçlü konuları (8 puan üstü) belirle
-3. Haftalık toplam çözülecek soru sayısını öner (100-300 soru arası)
-4. Her gün için detaylı çalışma programı oluştur (soru sayısı bazında)
-5. Öğrenciye özel öneriler ver
+2. Haftalık toplam çözülecek soru sayısını öner (100-300 soru arası)
+3. Her ders için soru dağılımını ID'leriyle birlikte belirle
+4. Öğrenciye özel öneriler ver
 
-ÖNEMLI: Çalışma planını saat bazında değil, çözülecek soru sayısı bazında oluştur.
+ÖNEMLI: 
+- Yanıtında ders ve konu ID'lerini mutlaka dahil et
+- Sadece soru sayısı odaklı plan oluştur (zor/kolay gibi kavramlar kullanma)
 - Zayıf konulara daha fazla soru ayır
-- Güçlü konularda tekrar için az soru ver
-- Her konu için uygun soru tiplerini belirt
 
 Lütfen yanıtını aşağıdaki JSON formatında ver:
 
 {{
     "week_number": 1,
     "total_questions": 180,
-    "daily_plans": [
+    "subject_plans": [
         {{
-            "day": "Pazartesi",
-            "subjects": [
+            "subject_id": 1,
+            "subject_name": "Matematik",
+            "total_questions": 60,
+            "topics": [
                 {{
-                    "subject": "Matematik",
-                    "topic": "Sayılar",
-                    "question_count": 15,
-                    "question_types": ["Temel işlemler", "Problem çözme", "Uygulamalı sorular"],
-                    "difficulty_levels": ["Kolay: 8 soru", "Orta: 5 soru", "Zor: 2 soru"]
+                    "topic_id": 1,
+                    "topic_name": "Sayılar",
+                    "question_count": 20
+                }},
+                {{
+                    "topic_id": 2,
+                    "topic_name": "Cebir",
+                    "question_count": 25
                 }}
             ]
         }}
@@ -108,9 +108,10 @@ Lütfen yanıtını aşağıdaki JSON formatında ver:
 }}
 
 ÖNEMLI FORMAT KURALLARI:
-- weak_subjects: Sadece ders isimleri içeren string array olmalı. Örnek: ["Matematik", "Fizik"]
+- subject_id ve topic_id değerleri PostgreSQL'den gelen ID'ler olmalı
+- weak_subjects: Sadece ders isimleri içeren string array olmalı
 - recommendations: String array olmalı
-- daily_plans: Belirtilen yapıda object array olmalı
+- Sadece soru sayısı belirt, zorluk seviyesi belirtme
 
 Yanıtında sadece JSON formatını kullan, başka açıklama ekleme.
 """
@@ -142,7 +143,7 @@ Yanıtında sadece JSON formatını kullan, başka açıklama ekleme.
                 student_name=student_performance.name,
                 week_number=parsed_data.get("week_number", 1),
                 total_questions=parsed_data.get("total_questions", 150),
-                daily_plans=parsed_data.get("daily_plans", []),
+                subject_plans=parsed_data.get("subject_plans", []),
                 weak_subjects=weak_subjects,
                 recommendations=parsed_data.get("recommendations", []),
                 created_at=datetime.now()

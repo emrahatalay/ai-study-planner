@@ -71,7 +71,7 @@ class ConsoleUI:
     
     @staticmethod
     def print_study_plan(study_plan: StudyPlan):
-        """Çalışma planını yazdırır"""
+        """Çalışma planını yazdırır (PostgreSQL ID'leriyle)"""
         ConsoleUI.print_header(f"{study_plan.student_name} - ÇALIŞMA PLANI")
         
         print(f"{Fore.CYAN}Hafta: {study_plan.week_number}{Style.RESET_ALL}")
@@ -84,36 +84,22 @@ class ConsoleUI:
             for subject in study_plan.weak_subjects:
                 print(f"   • {subject}")
         
-        # Günlük planları göster
-        print(f"\n{Fore.YELLOW}📅 Günlük Çalışma Planı:{Style.RESET_ALL}")
-        for daily_plan in study_plan.daily_plans:
-            print(f"\n{Fore.GREEN}📅 {daily_plan.get('day', 'Bilinmeyen Gün')}{Style.RESET_ALL}")
+        # Ders bazında soru dağılımını göster
+        print(f"\n{Fore.YELLOW}� Ders Bazında Soru Dağılımı:{Style.RESET_ALL}")
+        for subject_plan in study_plan.subject_plans:
+            subject_id = subject_plan.get('subject_id', 'N/A')
+            subject_name = subject_plan.get('subject_name', 'Bilinmeyen')
+            total_questions = subject_plan.get('total_questions', 0)
             
-            subjects_data = daily_plan.get('subjects', [])
-            if subjects_data:
-                total_daily_questions = sum(s.get('question_count', 0) for s in subjects_data)
-                print(f"   Toplam: {total_daily_questions} soru")
+            print(f"\n{Fore.GREEN}📖 {subject_name} (ID: {subject_id}) - {total_questions} soru{Style.RESET_ALL}")
+            
+            topics = subject_plan.get('topics', [])
+            for topic in topics:
+                topic_id = topic.get('topic_id', 'N/A')
+                topic_name = topic.get('topic_name', 'Bilinmeyen')
+                question_count = topic.get('question_count', 0)
                 
-                for subject_data in subjects_data:
-                    subject_name = subject_data.get('subject', 'Bilinmeyen')
-                    topic_name = subject_data.get('topic', 'Bilinmeyen')
-                    question_count = subject_data.get('question_count', 0)
-                    question_types = subject_data.get('question_types', [])
-                    difficulty_levels = subject_data.get('difficulty_levels', [])
-                    
-                    print(f"   📖 {subject_name} - {topic_name} ({question_count} soru)")
-                    
-                    if question_types:
-                        print(f"      🎯 Soru Tipleri:")
-                        for q_type in question_types:
-                            print(f"         • {q_type}")
-                    
-                    if difficulty_levels:
-                        print(f"      📊 Zorluk Seviyeleri:")
-                        for difficulty in difficulty_levels:
-                            print(f"         • {difficulty}")
-            else:
-                print("   Çalışma planı mevcut değil")
+                print(f"   • {topic_name} (ID: {topic_id}): {question_count} soru")
         
         # Önerileri göster
         if study_plan.recommendations:
@@ -139,11 +125,12 @@ class ConsoleUI:
     @staticmethod
     def print_menu():
         """Ana menüyü yazdırır"""
-        ConsoleUI.print_header("GEMİNİ AI ÇALIŞMA PLANI ÜRETİCİSİ")
-        print(f"{Fore.YELLOW}1.{Style.RESET_ALL} Tüm öğrencileri listele")
-        print(f"{Fore.YELLOW}2.{Style.RESET_ALL} Tüm dersleri ve konuları listele")
-        print(f"{Fore.YELLOW}3.{Style.RESET_ALL} Öğrenci için çalışma planı oluştur")
-        print(f"{Fore.YELLOW}4.{Style.RESET_ALL} Çıkış")
+        ConsoleUI.print_header("POSTGRESQL & AI ENTEGRASYON ÇALIŞMA PLANI")
+        print(f"{Fore.YELLOW}1.{Style.RESET_ALL} PostgreSQL'den Ders ve Konuları Listele")
+        print(f"{Fore.YELLOW}2.{Style.RESET_ALL} AI ile Çalışma Planı Oluştur")
+        print(f"{Fore.YELLOW}3.{Style.RESET_ALL} Veritabanı İşlemlerini Test Et")
+        print(f"{Fore.YELLOW}4.{Style.RESET_ALL} AI'ya Gönderilen Veri Formatını Göster")
+        print(f"{Fore.YELLOW}5.{Style.RESET_ALL} Çıkış")
         print()
     
     @staticmethod

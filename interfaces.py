@@ -10,7 +10,7 @@ class AIServiceInterface(ABC):
     async def generate_study_plan(
         self, 
         student_performance: StudentPerformance, 
-        subjects: List[Subject]
+        subjects_data: List[dict]  # PostgreSQL'den gelen id ve name verileri
     ) -> StudyPlan:
         """Öğrenci performansına göre çalışma planı oluşturur"""
         pass

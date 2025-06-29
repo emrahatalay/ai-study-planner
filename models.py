@@ -5,13 +5,13 @@ from datetime import datetime
 
 class Topic(BaseModel):
     """Ders konusu modeli"""
-    id: int
+    id: str  # GUID olarak değiştirildi
     name: str
 
 
 class Subject(BaseModel):
     """Ders modeli"""
-    id: int
+    id: str  # GUID olarak değiştirildi
     name: str
     topics: List[Topic]
 
@@ -43,7 +43,7 @@ class StudyPlan(BaseModel):
     student_name: str
     week_number: int
     total_questions: int  # Toplam soru sayısı
-    daily_plans: List[dict]
+    subject_plans: List[dict]  # Her ders için soru dağılımı
     weak_subjects: List[str]
     recommendations: List[str]
     created_at: datetime
