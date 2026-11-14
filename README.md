@@ -93,4 +93,4 @@ The console UI and the data it ships with are in Turkish.
 
 ---
 
-<sub>Made by **Emrah Atalay** at <a href="https://eatalay.dev/en">eatalay.dev</a>: mobile apps, games and automation, built with AI and finished by a human. Want to automate a workflow with AI? <a href="mailto:info@eatalay.dev">info@eatalay.dev</a></sub>
+<sub>Made by **Emrah Atalay** at <a href="https://eatalay.dev/en">eatalay.dev</a>: web and mobile apps, games and automation, built with AI and finished by a human. Want to automate a workflow with AI? <a href="mailto:info@eatalay.dev">info@eatalay.dev</a></sub>
