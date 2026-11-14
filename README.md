@@ -1,6 +1,6 @@
 <img src=".github/readme/banner.svg" width="100%" alt="AI Study Planner — reads student scores from PostgreSQL and asks Gemini for a weekly study plan.">
 
-**Turn exam scores into a weekly study plan.** The app reads subjects, topics and a student's scores (out of 10) from PostgreSQL, sends them to Gemini, and gets back a plan that says how many questions to solve per topic this week, which subjects are weak and what to focus on. The plan comes back as JSON, is validated with Pydantic and refers to the same subject and topic IDs as the database, so it can be stored or shown in any app.
+**Turn exam scores into a weekly study plan.** The app reads subjects, topics and a student's scores (out of 10) from PostgreSQL, sends them to Gemini, and gets back a plan that says how many questions to solve per topic this week, which subjects are weak and what to focus on. The plan comes back as JSON, is parsed into typed Pydantic models and uses the subject and topic IDs it was given, so it can be stored or shown in any app.
 
 > A small, complete example of the kind of AI automation I build for clients: real data in, an LLM in the middle, structured and checked output out.
 
@@ -8,7 +8,7 @@
 
 1. **Read** subjects, topics and the student's latest reports from PostgreSQL.
 2. **Prompt** Gemini 2.5 Flash with that data as JSON and clear rules: plan in question counts, use the given IDs.
-3. **Validate** the reply: extract the JSON, parse it into Pydantic models and reject anything that doesn't fit.
+3. **Validate** the reply: pull the JSON out of the text and parse it into Pydantic models; a malformed reply raises an error with the raw answer attached.
 4. **Show** the plan in a colourful console UI, ready to be saved or sent on.
 
 **Example output**
